@@ -7,17 +7,17 @@ namespace FacturApp.Config;
 public static class AppConfig
 {
     // ─── Azure Speech ─────────────────────────────────────────────────────────
-    public const string SpeechKey = "58NGtvhK8n9eYuoDaYKLnbH6is9wxI1RRxpBXOhca4N6umxEDkPWJQQJ99CCAC5T7U2XJ3w3AAAYACOGBAxv";
+    public const string SpeechKey = "aqui_va_tu_key";
     public const string SpeechRegion = "francecentral";
 
     // ─── Azure OpenAI ─────────────────────────────────────────────────────────
-    public const string OpenAIEndpoint = "https://davidopenia.openai.azure.com/";
-    public const string OpenAIKey = "9drG8bViXw3Jy54BJFXBXhqCzxD0tDhrterTXvtB5O8s0p9ppxzHJQQJ99CBAC5T7U2XJ3w3AAABACOGN5Ec";
+    public const string OpenAIEndpoint = "aqui_va_tu_endpoint";
+    public const string OpenAIKey = "aqui_va_tu_key";
     public const string OpenAIDeployment = "gpt-4o";
 
     // ─── Azure Document Intelligence ──────────────────────────────────────────
-    public const string DocIntelligenceEndpoint = "https://davidia.cognitiveservices.azure.com/";
-    public const string DocIntelligenceKey = "EGIpQPkwUuCClrrm2x1v9pOTvfhONOhP2bQ6PsW7VbipXnGsv3T9JQQJ99CBAC5T7U2XJ3w3AAALACOG36VT";
+    public const string DocIntelligenceEndpoint = "aqui_va_tu_endpoint";
+    public const string DocIntelligenceKey = "aqui_va_tu_key";
 
     // ─── PostgreSQL ───────────────────────────────────────────────────────────
     // En Windows dev: localhost. En Android emulador: 10.0.2.2
