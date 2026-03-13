@@ -1,0 +1,99 @@
+﻿@page "/"
+@page "/facturas"
+@using FacturApp.ViewModels
+@using FacturApp.DTOs
+@inject InvoiceListViewModel VM
+@implements IDisposable
+
+<PageTitle>Facturas - FacturApp</PageTitle>
+
+<div class="page-container">
+    <div class="page-header">
+        <h1>📋 Mis Facturas</h1>
+        <p>Historial de todas las facturas generadas</p>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-bar">
+        <label>Filtrar por origen:</label>
+        <select @bind="VM.FiltroOrigen" class="filter-select">
+            <option value="TODOS">Todos</option>
+            <option value="VOZ">Voz</option>
+            <option value="DOCUMENTO">Documento</option>
+            <option value="MANUAL">Manual</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" @onclick="Reload">🔄 Actualizar</button>
+    </div>
+
+    @if (VM.IsLoading)
+    {
+        <div class="loading-container">
+            <div class="spinner-lg"></div>
+            <p>Cargando facturas...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(VM.ErrorMessage))
+    {
+        <div class="alert alert-error"><span>⚠️</span> @VM.ErrorMessage</div>
+    }
+    else if (!VM.HasFacturas)
+    {
+        <div class="empty-state">
+            <span class="empty-icon">📭</span>
+            <p>No hay facturas. ¡Graba tu primera factura por voz!</p>
+        </div>
+    }
+    else
+    {
+        <div class="invoice-grid">
+            @foreach (var factura in VM.Facturas)
+            {
+                <div class="invoice-card">
+                    <div class="invoice-card-header">
+                        <span class="invoice-number">@factura.NumeroFactura</span>
+                        <span class="badge badge-@factura.Origen.ToLower()">@factura.Origen</span>
+                    </div>
+                    <div class="invoice-card-body">
+                        <p class="client-name">👤 @factura.ClienteNombre</p>
+                        <p class="invoice-date">📅 @factura.FechaEmision.ToString("dd/MM/yyyy HH:mm")</p>
+                        <p class="invoice-items">@factura.Lineas.Count producto(s)</p>
+                    </div>
+                    <div class="invoice-card-footer">
+                        <span class="invoice-total">@factura.Total.ToString("F2") €</span>
+                        @if (!string.IsNullOrEmpty(factura.PdfBase64))
+                        {
+                            <button class="btn btn-primary btn-sm" @onclick="() => DownloadPdf(factura)">
+                                📄 PDF
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        VM.StateChanged = () => { _ = InvokeAsync(StateHasChanged); };
+        await VM.LoadAsync();
+    }
+
+    private async Task Reload() => await VM.LoadAsync();
+
+    private async Task DownloadPdf(FacturaDto factura)
+    {
+        var bytes = await VM.DownloadPdfAsync(factura.Id);
+        if (bytes == null) return;
+
+        var path = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            $"{factura.NumeroFactura}.pdf");
+        await File.WriteAllBytesAsync(path, bytes);
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+            await Application.Current!.MainPage!.DisplayAlert("PDF guardado", $"Guardado en:\n{path}", "OK"));
+    }
+
+    public void Dispose() => VM.StateChanged = null;
+}

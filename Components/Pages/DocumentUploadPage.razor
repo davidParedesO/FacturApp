@@ -1,0 +1,194 @@
+@page "/documents"
+@using FacturApp.ViewModels
+@using FacturApp.DTOs
+@inject DocumentViewModel VM
+@implements IDisposable
+
+<PageTitle>Procesar Documento - FacturApp</PageTitle>
+
+<div class="page-container">
+    <div class="page-header">
+        <h1>📄 Procesar Documento</h1>
+        <p>Sube una factura en PDF o imagen para extraer sus datos automáticamente</p>
+    </div>
+
+    <!-- Upload area -->
+    <div class="card upload-card">
+        <div class="upload-zone @(VM.HasArchivo ? "has-file" : "")">
+            <InputFile OnChange="OnFileSelected" accept=".pdf,.jpg,.jpeg,.png,.tiff" class="file-input" />
+            @if (VM.HasArchivo)
+            {
+                <div class="file-info">
+                    <span class="file-icon">📎</span>
+                    <span>@VM.ArchivoNombre</span>
+                </div>
+            }
+            else
+            {
+                <div class="upload-placeholder">
+                    <span class="upload-icon">☁️</span>
+                    <p>Arrastra un archivo aquí o haz clic para seleccionar</p>
+                    <small>PDF, JPG, PNG, TIFF — máx. 50 MB</small>
+                </div>
+            }
+        </div>
+
+        @if (!VM.HasArchivo)
+        {
+            <div class="mt-3 text-center">
+                <p class="mb-2" style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">
+                    -- O también puedes --
+                </p>
+                <button class="btn btn-secondary w-100" @onclick="TakePhotoAsync" disabled="@VM.IsLoading" style="justify-content: center; padding: 12px; font-weight: 600;">
+                    📸 Tomar Foto con la Cámara
+                </button>
+            </div>
+        }
+
+        @if (VM.HasArchivo)
+        {
+            <div class="upload-actions">
+                <button class="btn btn-primary" @onclick="OnProcess" disabled="@VM.IsLoading">
+                    @if (VM.IsLoading)
+                    {
+                        <span class="spinner"></span>
+                        <span>Procesando...</span>
+                    }
+                    else
+                    {
+                        <span>🔍 Analizar documento</span>
+                    }
+                </button>
+                <button class="btn btn-secondary" @onclick="VM.Reset" disabled="@VM.IsLoading">
+                    Cancelar
+                </button>
+            </div>
+        }
+
+        <p class="status-text">@VM.StatusMessage</p>
+    </div>
+
+    <!-- Error -->
+    @if (VM.HasError)
+    {
+        <div class="alert alert-error">
+            <span>⚠️</span> @VM.ErrorMessage
+        </div>
+    }
+
+    <!-- Factura extraída -->
+    @if (VM.HasFactura && VM.FacturaGenerada is { } factura)
+    {
+        <div class="card invoice-result">
+            <div class="invoice-header">
+                <div>
+                    <h2>Factura @factura.NumeroFactura</h2>
+                    <span class="badge badge-documento">DOCUMENTO</span>
+                </div>
+                <span>📅 @factura.FechaEmision.ToString("dd/MM/yyyy")</span>
+            </div>
+
+            <div class="invoice-client">
+                <h4>Cliente detectado</h4>
+                <p><strong>@factura.ClienteNombre</strong> — NIF: @factura.ClienteNif</p>
+                <p>@factura.ClienteEmail</p>
+            </div>
+
+            <table class="invoice-table">
+                <thead>
+                    <tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var linea in factura.Lineas)
+                    {
+                        <tr>
+                            <td>@linea.ProductoNombre</td>
+                            <td>@linea.Cantidad</td>
+                            <td>@linea.PrecioUnitario.ToString("F2") €</td>
+                            <td>@linea.Subtotal.ToString("F2") €</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div class="invoice-totals">
+                <div class="total-row"><span>Subtotal:</span><span>@factura.Subtotal.ToString("F2") €</span></div>
+                <div class="total-row"><span>IVA:</span><span>@factura.Iva.ToString("F2") €</span></div>
+                <div class="total-row total-final"><span>TOTAL:</span><span>@factura.Total.ToString("F2") €</span></div>
+            </div>
+
+            <div class="invoice-actions">
+                @if (!string.IsNullOrEmpty(factura.PdfBase64))
+                {
+                    <button class="btn btn-primary" @onclick="() => DownloadPdf(factura)">
+                        📄 Descargar PDF
+                    </button>
+                }
+                <button class="btn btn-secondary" @onclick="VM.Reset">
+                    🔄 Nuevo documento
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        VM.StateChanged = () => { _ = InvokeAsync(StateHasChanged); };
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file.Size > 50 * 1024 * 1024) return; // 50 MB max
+
+        using var ms = new MemoryStream();
+        await file.OpenReadStream(50 * 1024 * 1024).CopyToAsync(ms);
+        VM.SetArchivo(ms.ToArray(), file.Name, file.ContentType);
+    }
+
+    private async Task OnProcess() => await VM.ProcessDocumentAsync();
+
+    private async Task TakePhotoAsync()
+    {
+        try
+        {
+            if (Microsoft.Maui.Media.MediaPicker.Default.IsCaptureSupported)
+            {
+                var photo = await Microsoft.Maui.Media.MediaPicker.Default.CapturePhotoAsync();
+                if (photo != null)
+                {
+                    using var stream = await photo.OpenReadAsync();
+                    using var ms = new MemoryStream();
+                    await stream.CopyToAsync(ms);
+                    VM.SetArchivo(ms.ToArray(), photo.FileName, photo.ContentType);
+                }
+            }
+            else
+            {
+                await Application.Current!.MainPage!.DisplayAlert(
+                    "Error", "La cámara no está soportada en este dispositivo.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await Application.Current!.MainPage!.DisplayAlert(
+                "Error", $"No se pudo usar la cámara: {ex.Message}", "OK");
+        }
+    }
+
+    private async Task DownloadPdf(FacturaDto factura)
+    {
+        if (string.IsNullOrEmpty(factura.PdfBase64)) return;
+        var bytes = Convert.FromBase64String(factura.PdfBase64);
+        var path = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            $"{factura.NumeroFactura}.pdf");
+        await File.WriteAllBytesAsync(path, bytes);
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+            await Application.Current!.MainPage!.DisplayAlert("PDF guardado", $"Guardado en:\n{path}", "OK"));
+    }
+
+    public void Dispose() => VM.StateChanged = null;
+}

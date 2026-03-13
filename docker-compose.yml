@@ -1,0 +1,30 @@
+services:
+  # 1. Base de datos PostgreSQL
+  postgres-vector:
+    image: pgvector/pgvector:pg16
+    container_name: mi_postgres_rag
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: superpassword123
+      POSTGRES_DB: facturacion_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql  # ← script de inicialización
+    restart: unless-stopped
+
+  # 2. RabbitMQ con panel visual
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: mi_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: superpassword123
+    ports:
+      - "5672:5672"   # Puerto interno (API → RabbitMQ)
+      - "15672:15672" # Panel web: http://localhost:15672
+    restart: unless-stopped
+
+volumes:
+  pgdata:

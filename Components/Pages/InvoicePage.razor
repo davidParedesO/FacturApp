@@ -1,0 +1,184 @@
+@page "/invoice"
+@using FacturApp.ViewModels
+@using FacturApp.DTOs
+@inject InvoiceViewModel VM
+@implements IDisposable
+
+<PageTitle>Crear Factura - FacturApp</PageTitle>
+
+<div class="chat-container">
+    <div class="chat-header">
+        <h1>💬 Asistente de Facturación</h1>
+        <p>Escribe tu petición o envíame un audio explicándolo</p>
+    </div>
+
+    <!-- Scrollable Messages Area -->
+    <div class="chat-messages" id="chat-scroll-view">
+        
+        @if (!VM.Messages.Any())
+        {
+            <div class="empty-chat-state">
+                <span class="empty-icon">👋</span>
+                <p>¡Hola! Dime qué necesitas facturar hoy.</p>
+                <small>Ej: "Añade 2 horas de diseño web para María a 45€ la hora"</small>
+            </div>
+        }
+
+        @foreach (var msg in VM.Messages)
+        {
+            <div class="chat-bubble-wrapper @(msg.Role == "User" ? "user" : "ai")">
+                <div class="chat-bubble">
+                    @if (msg.IsLoading)
+                    {
+                        <div class="typing-indicator">
+                            <span></span><span></span><span></span>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (!string.IsNullOrEmpty(msg.Text))
+                        {
+                            <p class="bubble-text">@msg.Text</p>
+                        }
+
+                        @if (msg.AudioBytes != null)
+                        {
+                            <audio controls class="audio-player">
+                                <source src="data:audio/wav;base64,@Convert.ToBase64String(msg.AudioBytes)" type="audio/wav" />
+                                Tu navegador no soporta reproducción de audio.
+                            </audio>
+                        }
+
+                        @if (msg.Factura is { } factura)
+                        {
+                            <div class="card invoice-result chat-invoice-card">
+                                <div class="invoice-header mb-2">
+                                    <div>
+                                        <h2 style="font-size: 1.1rem; margin: 0;">Factura @factura.NumeroFactura</h2>
+                                        <span class="badge badge-@factura.Estado.ToLower()" style="font-size: 0.65rem;">@factura.Estado</span>
+                                    </div>
+                                    <div class="invoice-meta">
+                                        <span>📅 @factura.FechaEmision.ToString("dd/MM/yyyy")</span>
+                                    </div>
+                                </div>
+                                <div class="invoice-client mb-2 p-2" style="font-size: 0.8rem;">
+                                    <strong>@factura.ClienteNombre</strong><br/>
+                                    <span style="color: var(--text-muted)">@factura.ClienteNif | @factura.ClienteEmail</span>
+                                </div>
+                                <table class="invoice-table" style="font-size: 0.8rem; margin-bottom: 8px;">
+                                    <thead><tr><th>Prod</th><th>Cant</th><th>Subtotal</th></tr></thead>
+                                    <tbody>
+                                        @foreach (var linea in factura.Lineas)
+                                        {
+                                            <tr>
+                                                <td>@linea.ProductoNombre</td>
+                                                <td>@linea.Cantidad</td>
+                                                <td>@linea.Subtotal.ToString("F2") €</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                                <div class="invoice-totals text-end" style="font-size: 0.9rem;">
+                                    <div class="total-final">TOTAL: @factura.Total.ToString("F2") €</div>
+                                </div>
+                                @if (!string.IsNullOrEmpty(factura.PdfBase64))
+                                {
+                                    <div class="mt-2 text-center">
+                                        <button class="btn btn-primary btn-sm w-100" @onclick="() => DownloadPdf(factura)">
+                                            📄 Descargar PDF
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
+
+        @if (VM.HasError)
+        {
+            <div class="alert alert-error mt-3">
+                <span>⚠️</span> @VM.ErrorMessage
+            </div>
+        }
+    </div>
+
+    <!-- Bottom Action Bar (Input & Record) -->
+    <div class="chat-input-bar">
+        
+        @if (VM.IsRecording)
+        {
+            <div class="recording-status-bar">
+                <div class="recording-wave m-0">
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <span class="ms-3 status-text d-inline m-0">@VM.StatusMessage</span>
+            </div>
+        }
+        else
+        {
+            <input type="text"
+                   class="chat-text-input" 
+                   placeholder="Escribe tu petición aquí..." 
+                   @bind="VM.TextInput" 
+                   @bind:event="oninput" 
+                   @onkeyup="HandleKeyUp"
+                   disabled="@VM.IsLoading" />
+
+            <button class="btn-chat-send" @onclick="SendMessage" disabled="@(!VM.CanSendText)">
+                <span style="font-size: 1.2rem;">🚀</span>
+            </button>
+        }
+
+        <button class="btn-chat-record @(VM.IsRecording ? "btn-stop" : "btn-start")" 
+                @onclick="OnToggleRecording" 
+                disabled="@(!VM.CanRecord && !VM.IsRecording)">
+            @if (VM.IsRecording)
+            {
+                <span style="font-size: 1.2rem;">⏹</span>
+            }
+            else
+            {
+                <span style="font-size: 1.2rem;">🎙️</span>
+            }
+        </button>
+        
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        VM.StateChanged = () => { _ = InvokeAsync(StateHasChanged); };
+    }
+
+    private async Task OnToggleRecording() => await VM.ToggleRecordingAsync();
+
+    private async Task SendMessage() => await VM.SendMessageAsync();
+
+    private async Task HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && VM.CanSendText)
+        {
+            await SendMessage();
+        }
+    }
+
+    private async Task DownloadPdf(FacturaDto factura)
+    {
+        if (string.IsNullOrEmpty(factura.PdfBase64)) return;
+        var bytes = Convert.FromBase64String(factura.PdfBase64);
+        var path = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            $"{factura.NumeroFactura}.pdf");
+        await File.WriteAllBytesAsync(path, bytes);
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+            await Application.Current!.MainPage!.DisplayAlert(
+                "PDF guardado",
+                $"El PDF se ha guardado en:\n{path}",
+                "OK"));
+    }
+
+    public void Dispose() => VM.StateChanged = null;
+}
