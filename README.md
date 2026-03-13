@@ -84,4 +84,4 @@ Si ejecutas la app en un emulador o dispositivo físico Android, recuerda que `l
 
 ---
 
-Developed with ❤️ by the FacturApp Team.
+Developed with ❤️ by David Paredes.
