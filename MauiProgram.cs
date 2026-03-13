@@ -1,4 +1,4 @@
-﻿using FacturApp.Data;
+using FacturApp.Data;
 using FacturApp.Repositories;
 using FacturApp.Services;
 using Microsoft.EntityFrameworkCore;
@@ -38,6 +38,7 @@ public static class MauiProgram
         builder.Services.AddScoped<IInvoiceOrchestrationService, InvoiceOrchestrationService>();
 
         // ─── RabbitMQ (singleton: una sola conexión) ───────────────────────
+        builder.Services.AddSingleton<AppSettingsService>();
         builder.Services.AddSingleton<IRabbitMQService, RabbitMQService>();
 
         // ─── Flow Service (reemplaza al ApiService HTTP) ───────────────────

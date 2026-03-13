@@ -10,7 +10,7 @@ public interface IAzureSpeechService
     Task<string> TranscribeAsync(Stream audioStream, string audioFormat = "wav", CancellationToken ct = default);
 }
 
-public class AzureSpeechService(ILogger<AzureSpeechService> logger) : IAzureSpeechService
+public class AzureSpeechService(ILogger<AzureSpeechService> logger, AppSettingsService settings) : IAzureSpeechService
 {
     public async Task<string> TranscribeAsync(Stream audioStream, string audioFormat = "wav", CancellationToken ct = default)
     {
@@ -22,7 +22,7 @@ public class AzureSpeechService(ILogger<AzureSpeechService> logger) : IAzureSpee
             await using (var fs = File.Create(tempFile))
                 await audioStream.CopyToAsync(fs, ct);
 
-            var speechConfig = SpeechConfig.FromSubscription(AppConfig.SpeechKey, AppConfig.SpeechRegion);
+            var speechConfig = SpeechConfig.FromSubscription(settings.SpeechKey, settings.SpeechRegion);
             speechConfig.SpeechRecognitionLanguage = "es-ES";
 
             using var audioConfig = AudioConfig.FromWavFileInput(tempFile);

@@ -1,0 +1,159 @@
+@page "/settings"
+@using FacturApp.Services
+@inject AppSettingsService SettingsService
+@inject IRabbitMQService RabbitService
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0"><span class="me-2">⚙️</span> Ajustes Generales</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="text-primary font-weight-bold mb-0"><i class="bi bi-hdd-network me-2"></i> RabbitMQ</h6>
+                        @if (RabbitService.IsConnected)
+                        {
+                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i> Conectado</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i> Desconectado</span>
+                        }
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small font-weight-bold">Host / IP</label>
+                        <input type="text" class="form-control form-control-sm" @bind="host" placeholder="localhost" />
+                        <small class="text-muted">Usa 'localhost' para PC, '10.0.2.2' para simulador Android.</small>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col">
+                            <label class="form-label small font-weight-bold">Usuario</label>
+                            <input type="text" class="form-control form-control-sm" @bind="user" />
+                        </div>
+                        <div class="col">
+                            <label class="form-label small font-weight-bold">Contraseña</label>
+                            <input type="password" class="form-control form-control-sm" @bind="password" />
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <h6 class="text-primary font-weight-bold mb-3"><i class="bi bi-mic me-2"></i> Azure Speech</h6>
+                    <div class="mb-3">
+                        <label class="form-label small font-weight-bold">Speech Key</label>
+                        <input type="password" class="form-control form-control-sm" @bind="speechKey" />
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small font-weight-bold">Región</label>
+                        <input type="text" class="form-control form-control-sm" @bind="speechRegion" placeholder="francecentral" />
+                    </div>
+
+                    <hr />
+
+                    <h6 class="text-primary font-weight-bold mb-3"><i class="bi bi-robot me-2"></i> Azure OpenAI</h6>
+                    <div class="mb-3">
+                        <label class="form-label small font-weight-bold">Endpoint</label>
+                        <input type="text" class="form-control form-control-sm" @bind="openAIEndpoint" />
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-8">
+                            <label class="form-label small font-weight-bold">API Key</label>
+                            <input type="password" class="form-control form-control-sm" @bind="openAIKey" />
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small font-weight-bold">Deployment</label>
+                            <input type="text" class="form-control form-control-sm" @bind="openAIDeployment" />
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <h6 class="text-primary font-weight-bold mb-3"><i class="bi bi-file-earmark-text me-2"></i> Document Intelligence</h6>
+                    <div class="mb-3">
+                        <label class="form-label small font-weight-bold">Endpoint</label>
+                        <input type="text" class="form-control form-control-sm" @bind="docEndpoint" />
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small font-weight-bold">API Key</label>
+                        <input type="password" class="form-control form-control-sm" @bind="docKey" />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(statusMessage))
+                    {
+                        <div class="alert alert-success py-2 small mb-4" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i> @statusMessage
+                        </div>
+                    }
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary font-weight-bold py-2" @onclick="SaveSettings">
+                            <i class="bi bi-save me-2"></i> Guardar y Reconectar RabbitMQ
+                        </button>
+                    </div>
+                </div>
+                <div class="card-footer bg-light py-2 text-center">
+                    <small class="text-muted">Los ajustes de RabbitMQ intentarán reconectar al instante.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string host = "";
+    private string user = "";
+    private string password = "";
+    
+    private string speechKey = "";
+    private string speechRegion = "";
+    
+    private string openAIEndpoint = "";
+    private string openAIKey = "";
+    private string openAIDeployment = "";
+    
+    private string docEndpoint = "";
+    private string docKey = "";
+    
+    private string? statusMessage;
+
+    protected override void OnInitialized()
+    {
+        host = SettingsService.RabbitMQHost;
+        user = SettingsService.RabbitMQUser;
+        password = SettingsService.RabbitMQPassword;
+        
+        speechKey = SettingsService.SpeechKey;
+        speechRegion = SettingsService.SpeechRegion;
+        
+        openAIEndpoint = SettingsService.OpenAIEndpoint;
+        openAIKey = SettingsService.OpenAIKey;
+        openAIDeployment = SettingsService.OpenAIDeployment;
+        
+        docEndpoint = SettingsService.DocIntelligenceEndpoint;
+        docKey = SettingsService.DocIntelligenceKey;
+    }
+
+    private async Task SaveSettings()
+    {
+        SettingsService.SaveRabbitMQ(host, user, password);
+        SettingsService.SaveAzureSettings(speechKey, speechRegion, openAIEndpoint, openAIKey, openAIDeployment, docEndpoint, docKey);
+        
+        // Intentar reconectar RabbitMQ con los nuevos datos
+        await RabbitService.ReconnectAsync();
+        
+        statusMessage = "Ajustes guardados y reconexión intentada.";
+        StateHasChanged();
+        
+        await Task.Delay(3000);
+        statusMessage = null;
+        StateHasChanged();
+    }
+}
+
+<style>
+    .font-weight-bold { font-weight: 600; }
+    .card { border-radius: 12px; overflow: hidden; }
+    .input-group-text { color: #6c757d; font-size: 1.1rem; }
+</style>

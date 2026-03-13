@@ -1,4 +1,4 @@
-﻿using FacturApp.Models;
+using FacturApp.Models;
 using Microsoft.Extensions.Logging;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -19,104 +19,130 @@ public class QuestPdfService(ILogger<QuestPdfService> logger) : IQuestPdfService
         logger.LogInformation("Generando PDF: {N}", factura.NumeroFactura);
         QuestPDF.Settings.License = LicenseType.Community;
 
+        // Definición de strings con escape sequences para evitar problemas de codificación
+        string strFacturacion = "Sistema de Facturaci\u00f3n";
+        string strNumero = "N\u00ba " + factura.NumeroFactura;
+        string strDescripcion = "Descripci\u00f3n";
+        string strEuro = " \u20ac";
+
         var doc = Document.Create(container =>
         {
             container.Page(page =>
             {
                 page.Size(PageSizes.A4);
                 page.Margin(40);
-                page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(10));
+                page.DefaultTextStyle(x => x.FontFamily(Fonts.Arial).FontSize(11).FontColor("#374151"));
 
-                page.Header().Row(row =>
+                // Header Premium
+                page.Header().PaddingBottom(20).Row(row =>
                 {
                     row.RelativeItem().Column(col =>
                     {
-                        col.Item().Text("FacturApp").Bold().FontSize(24).FontColor("#1A56DB");
-                        col.Item().Text("Sistema de FacturaciÃ³n").FontSize(11).FontColor("#6B7280");
+                        col.Item().Text("FacturApp").Bold().FontSize(28).FontColor("#2563EB");
+                        col.Item().Text(strFacturacion).FontSize(12).FontColor("#6B7280").Italic();
                     });
-                    row.ConstantItem(160).AlignRight().Column(col =>
+                    
+                    row.ConstantItem(180).AlignRight().Column(col =>
                     {
-                        col.Item().Text("FACTURA").Bold().FontSize(18).FontColor("#111827");
-                        col.Item().Text($"NÂº {factura.NumeroFactura}").FontSize(11).FontColor("#374151");
+                        col.Item().Text("FACTURA").ExtraBold().FontSize(24).FontColor("#111827");
+                        col.Item().PaddingTop(2).Text(strNumero).SemiBold().FontSize(12).FontColor("#2563EB");
                         col.Item().Text($"Fecha: {factura.FechaEmision:dd/MM/yyyy}").FontSize(10).FontColor("#6B7280");
                     });
                 });
 
-                page.Content().PaddingVertical(20).Column(col =>
+                page.Content().Column(col =>
                 {
-                    col.Item().Border(1).BorderColor("#E5E7EB").Padding(15).Column(cc =>
+                    // Separador sutil
+                    col.Item().PaddingVertical(10).LineHorizontal(1).LineColor("#E5E7EB");
+
+                    // Bloque de Información (Dos columnas)
+                    col.Item().PaddingVertical(20).Row(row =>
                     {
-                        cc.Item().Text("DATOS DEL CLIENTE").Bold().FontSize(11).FontColor("#374151");
-                        cc.Item().PaddingTop(6).Row(r =>
+                        // Datos del Emisor (Podrías hardcodear los tuyos si quisieras)
+                        row.RelativeItem().Column(cc =>
                         {
-                            r.RelativeItem().Column(c =>
+                            cc.Item().Text("DE:").Bold().FontSize(9).FontColor("#9CA3AF");
+                            cc.Item().Text("DAVID PAREDES").Bold().FontSize(12);
+                            cc.Item().Text("Calle Universidad, 123");
+                            cc.Item().Text("08001 Barcelona");
+                            cc.Item().Text("NIF: 12345678Z");
+                        });
+
+                        // Datos del Cliente
+                        row.RelativeItem().BorderLeft(1).BorderColor("#E5E7EB").PaddingLeft(20).Column(cc =>
+                        {
+                            cc.Item().Text("PARA:").Bold().FontSize(9).FontColor("#2563EB");
+                            cc.Item().Text(factura.Cliente?.Nombre ?? "---").Bold().FontSize(14);
+                            cc.Item().PaddingTop(4).Column(c =>
                             {
-                                c.Item().Text(factura.Cliente?.Nombre ?? "â€”").Bold().FontSize(12);
-                                c.Item().Text($"NIF: {factura.Cliente?.Nif ?? "â€”"}").FontColor("#6B7280");
-                                c.Item().Text($"Email: {factura.Cliente?.Email ?? "â€”"}").FontColor("#6B7280");
-                            });
-                            r.RelativeItem().Column(c =>
-                            {
-                                c.Item().Text($"Dir: {factura.Cliente?.Direccion ?? "â€”"}").FontColor("#6B7280");
-                                c.Item().Text($"Tel: {factura.Cliente?.Telefono ?? "â€”"}").FontColor("#6B7280");
+                                c.Item().Text($"NIF: {factura.Cliente?.Nif ?? "---"}");
+                                c.Item().Text($"Email: {factura.Cliente?.Email ?? "---"}");
+                                c.Item().Text($"Direcci\u00f3n: {factura.Cliente?.Direccion ?? "---"}");
                             });
                         });
                     });
 
-                    col.Item().PaddingTop(20).Table(table =>
+                    // Tabla de Productos con Estilo Moderno
+                    col.Item().PaddingTop(10).Table(table =>
                     {
                         table.ColumnsDefinition(cols =>
                         {
-                            cols.RelativeColumn(4);
-                            cols.RelativeColumn(1);
-                            cols.RelativeColumn(2);
-                            cols.RelativeColumn(2);
+                            cols.RelativeColumn(5); // Descripción
+                            cols.RelativeColumn(1); // Cant.
+                            cols.RelativeColumn(2); // Precio
+                            cols.RelativeColumn(2); // Subtotal
                         });
 
                         table.Header(h =>
                         {
-                            h.Cell().Background("#1A56DB").Padding(8).Text("DescripciÃ³n").Bold().FontColor(QColors.White);
-                            h.Cell().Background("#1A56DB").Padding(8).AlignCenter().Text("Cant.").Bold().FontColor(QColors.White);
-                            h.Cell().Background("#1A56DB").Padding(8).AlignRight().Text("Precio").Bold().FontColor(QColors.White);
-                            h.Cell().Background("#1A56DB").Padding(8).AlignRight().Text("Subtotal").Bold().FontColor(QColors.White);
+                            h.Cell().Padding(10).Background("#F8FAFC").BorderBottom(2).BorderColor("#2563EB").Text(strDescripcion).Bold().FontColor("#1E3A8A");
+                            h.Cell().Padding(10).Background("#F8FAFC").BorderBottom(2).BorderColor("#2563EB").AlignCenter().Text("Cant.").Bold().FontColor("#1E3A8A");
+                            h.Cell().Padding(10).Background("#F8FAFC").BorderBottom(2).BorderColor("#2563EB").AlignRight().Text("Precio").Bold().FontColor("#1E3A8A");
+                            h.Cell().Padding(10).Background("#F8FAFC").BorderBottom(2).BorderColor("#2563EB").AlignRight().Text("Subtotal").Bold().FontColor("#1E3A8A");
                         });
 
-                        var alt = false;
                         foreach (var linea in factura.Lineas)
                         {
-                            var bg = alt ? "#F9FAFB" : "#FFFFFF";
-                            alt = !alt;
-                            table.Cell().Background(bg).Padding(8).Text(linea.Producto?.Nombre ?? "â€”");
-                            table.Cell().Background(bg).Padding(8).AlignCenter().Text(linea.Cantidad.ToString());
-                            table.Cell().Background(bg).Padding(8).AlignRight().Text($"{linea.PrecioUnitario:F2} â‚¬");
-                            table.Cell().Background(bg).Padding(8).AlignRight().Text($"{linea.Subtotal:F2} â‚¬");
+                            table.Cell().Padding(10).BorderBottom(1).BorderColor("#F1F5F9").Text(linea.Producto?.Nombre ?? "---");
+                            table.Cell().Padding(10).BorderBottom(1).BorderColor("#F1F5F9").AlignCenter().Text(linea.Cantidad.ToString());
+                            table.Cell().Padding(10).BorderBottom(1).BorderColor("#F1F5F9").AlignRight().Text($"{linea.PrecioUnitario:N2}{strEuro}");
+                            table.Cell().Padding(10).BorderBottom(1).BorderColor("#F1F5F9").AlignRight().Text($"{linea.Subtotal:N2}{strEuro}");
                         }
                     });
 
-                    col.Item().PaddingTop(20).AlignRight().Column(t =>
+                    // Totales con fondo sutil
+                    col.Item().AlignRight().PaddingTop(20).Width(220).Container().Background("#F8FAFC").Padding(15).Column(t =>
                     {
-                        t.Item().Width(200).Row(r =>
+                        t.Item().Row(r =>
                         {
-                            r.RelativeItem().Text("Subtotal:").FontColor("#6B7280");
-                            r.ConstantItem(80).AlignRight().Text($"{factura.Subtotal:F2} â‚¬");
+                            r.RelativeItem().Text("Subtotal:").FontSize(10).FontColor("#64748B");
+                            r.ConstantItem(80).AlignRight().Text($"{factura.Subtotal:N2}{strEuro}");
                         });
-                        t.Item().Width(200).PaddingTop(4).Row(r =>
+                        t.Item().PaddingVertical(5).Row(r =>
                         {
-                            r.RelativeItem().Text("IVA (21%):").FontColor("#6B7280");
-                            r.ConstantItem(80).AlignRight().Text($"{factura.Iva:F2} â‚¬");
+                            r.RelativeItem().Text("IVA (21%):").FontSize(10).FontColor("#64748B");
+                            r.ConstantItem(80).AlignRight().Text($"{factura.Iva:N2}{strEuro}");
                         });
-                        t.Item().Width(200).PaddingTop(6).Background("#1A56DB").Padding(8).Row(r =>
+                        t.Item().BorderTop(1).BorderColor("#E2E8F0").PaddingTop(10).Row(r =>
                         {
-                            r.RelativeItem().Text("TOTAL:").Bold().FontColor(QColors.White);
-                            r.ConstantItem(80).AlignRight().Text($"{factura.Total:F2} â‚¬").Bold().FontColor(QColors.White);
+                            r.RelativeItem().Text("TOTAL").Bold().FontSize(16).FontColor("#1E3A8A");
+                            r.ConstantItem(100).AlignRight().Text($"{factura.Total:N2}{strEuro}").Bold().FontSize(16).FontColor("#2563EB");
                         });
                     });
                 });
 
-                page.Footer().AlignCenter().Text(t =>
+                // Footer decorativo
+                page.Footer().PaddingTop(40).Column(f =>
                 {
-                    t.Span("FacturApp â€” ").FontColor("#6B7280").FontSize(8);
-                    t.Span($"Generado el {DateTime.Now:dd/MM/yyyy HH:mm}").FontColor("#6B7280").FontSize(8);
+                    f.Item().AlignCenter().Text(t =>
+                    {
+                        t.Span("Gracias por elegir FacturApp").Bold().FontColor("#94A3B8");
+                    });
+                    f.Item().PaddingTop(5).AlignCenter().Text(t =>
+                    {
+                        t.Span("Documento generado electr\u00f3nicamente el ").FontColor("#CBD5E1").FontSize(8);
+                        t.Span($"{DateTime.Now:dd/MM/yyyy HH:mm}").FontColor("#CBD5E1").FontSize(8).Italic();
+                    });
                 });
             });
         });

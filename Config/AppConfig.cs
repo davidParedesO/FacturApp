@@ -25,7 +25,7 @@ public static class AppConfig
 #if ANDROID
     public const string LocalHostIp = "192.168.5.94";
 #else
-    public const string LocalHostIp = "localhost";
+    public const string LocalHostIp = "127.0.0.1";
 #endif
 
     public const string ConnectionString =

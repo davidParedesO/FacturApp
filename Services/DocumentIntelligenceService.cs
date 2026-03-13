@@ -10,15 +10,15 @@ public interface IDocumentIntelligenceService
     Task<InvoiceIntent?> AnalyzeInvoiceDocumentAsync(Stream documentStream, string contentType, CancellationToken ct = default);
 }
 
-public class DocumentIntelligenceService(ILogger<DocumentIntelligenceService> logger) : IDocumentIntelligenceService
+public class DocumentIntelligenceService(ILogger<DocumentIntelligenceService> logger, AppSettingsService settings) : IDocumentIntelligenceService
 {
     public async Task<InvoiceIntent?> AnalyzeInvoiceDocumentAsync(Stream documentStream, string contentType, CancellationToken ct = default)
     {
         logger.LogInformation("Analizando documento con Azure Document Intelligence...");
 
         var client = new DocumentAnalysisClient(
-            new Uri(AppConfig.DocIntelligenceEndpoint),
-            new AzureKeyCredential(AppConfig.DocIntelligenceKey));
+            new Uri(settings.DocIntelligenceEndpoint),
+            new AzureKeyCredential(settings.DocIntelligenceKey));
 
         var operation = await client.AnalyzeDocumentAsync(
             WaitUntil.Completed, "prebuilt-invoice", documentStream, cancellationToken: ct);

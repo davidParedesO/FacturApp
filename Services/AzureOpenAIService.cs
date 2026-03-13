@@ -27,7 +27,7 @@ public interface IAzureOpenAIService
     Task<AppIntentResult> DetectUserIntentAsync(List<ChatTurn> history, CancellationToken ct = default);
 }
 
-public class AzureOpenAIService(ILogger<AzureOpenAIService> logger) : IAzureOpenAIService
+public class AzureOpenAIService(ILogger<AzureOpenAIService> logger, AppSettingsService settings) : IAzureOpenAIService
 {
     private static readonly ChatTool InvoiceTool = ChatTool.CreateFunctionTool(
         functionName: "crear_factura",
@@ -76,9 +76,9 @@ public class AzureOpenAIService(ILogger<AzureOpenAIService> logger) : IAzureOpen
         logger.LogInformation("Analizando historial de conversación con IA...");
 
         var client = new AzureOpenAIClient(
-            new Uri(AppConfig.OpenAIEndpoint),
-            new System.ClientModel.ApiKeyCredential(AppConfig.OpenAIKey));
-        var chat = client.GetChatClient(AppConfig.OpenAIDeployment);
+            new Uri(settings.OpenAIEndpoint),
+            new System.ClientModel.ApiKeyCredential(settings.OpenAIKey));
+        var chat = client.GetChatClient(settings.OpenAIDeployment);
 
         var messages = new List<ChatMessage>
         {

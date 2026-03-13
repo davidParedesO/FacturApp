@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @page "/facturas"
 @using FacturApp.ViewModels
 @using FacturApp.DTOs
@@ -62,9 +62,14 @@
                         <span class="invoice-total">@factura.Total.ToString("F2") €</span>
                         @if (!string.IsNullOrEmpty(factura.PdfBase64))
                         {
-                            <button class="btn btn-primary btn-sm" @onclick="() => DownloadPdf(factura)">
-                                📄 PDF
-                            </button>
+                            <div class="d-flex gap-1">
+                                <button class="btn btn-primary btn-sm" @onclick="() => PreviewPdf(factura)" title="Ver">
+                                    👁️ Ver
+                                </button>
+                                <button class="btn btn-secondary btn-sm" @onclick="() => DownloadPdf(factura)" title="Descargar">
+                                    💾
+                                </button>
+                            </div>
                         }
                     </div>
                 </div>
@@ -82,6 +87,20 @@
 
     private async Task Reload() => await VM.LoadAsync();
 
+    private async Task PreviewPdf(FacturaDto factura)
+    {
+        var bytes = await VM.DownloadPdfAsync(factura.Id);
+        if (bytes == null) return;
+
+        var tempPath = Path.Combine(FileSystem.CacheDirectory, $"{factura.NumeroFactura}.pdf");
+        await File.WriteAllBytesAsync(tempPath, bytes);
+        
+        await Launcher.Default.OpenAsync(new OpenFileRequest
+        {
+            File = new ReadOnlyFile(tempPath)
+        });
+    }
+
     private async Task DownloadPdf(FacturaDto factura)
     {
         var bytes = await VM.DownloadPdfAsync(factura.Id);
@@ -92,7 +111,7 @@
             $"{factura.NumeroFactura}.pdf");
         await File.WriteAllBytesAsync(path, bytes);
         await MainThread.InvokeOnMainThreadAsync(async () =>
-            await Application.Current!.MainPage!.DisplayAlert("PDF guardado", $"Guardado en:\n{path}", "OK"));
+            await Application.Current!.MainPage!.DisplayAlert("Descargado", $"PDF guardado en Documentos:\n{factura.NumeroFactura}.pdf", "OK"));
     }
 
     public void Dispose() => VM.StateChanged = null;

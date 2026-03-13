@@ -1,4 +1,6 @@
 @inherits LayoutComponentBase
+@using FacturApp.Services
+@inject IRabbitMQService RabbitService
 
 <div class="page">
     <div class="sidebar">
@@ -6,6 +8,17 @@
     </div>
 
     <main class="main">
+        @if (!RabbitService.IsConnected)
+        {
+            <div class="alert alert-warning border-0 rounded-0 mb-0 py-2 d-flex align-items-center justify-content-center shadow-sm" style="font-size: 0.85rem; background-color: #fff3cd; color: #856404;">
+                <span class="me-2">⚠️</span> 
+                <strong>RabbitMQ Desconectado:</strong> 
+                <span class="ms-2 text-truncate" style="max-width: 300px;">@(RabbitService.LastErrorMessage ?? "No se pudo establecer conexión.")</span>
+                <button @onclick="RabbitService.ReconnectAsync" class="btn btn-sm btn-link text-dark text-decoration-underline font-weight-bold ms-2">Reintentar</button>
+                <a href="/settings" class="ms-3 text-dark text-decoration-underline font-weight-bold">Ajustes</a>
+            </div>
+        }
+
         <article class="content px-4">
             @Body
         </article>
