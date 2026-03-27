@@ -85,3 +85,11 @@ Si ejecutas la app en un emulador o dispositivo físico Android, recuerda que `l
 ---
 
 Developed with ❤️ by David Paredes.
+<img width="716" height="636" alt="Captura de pantalla 2026-03-27 161226" src="https://github.com/user-attachments/assets/4c8c061a-62ac-4eea-9e30-465cecfba6d4" />
+<img width="600" height="649" alt="Captura de pantalla 2026-03-27 161037" src="https://github.com/user-attachments/assets/d325ef5e-c026-4655-bf53-5d18983c34f7" />
+<img width="1424" height="491" alt="Captura de pantalla 2026-03-27 160942" src="https://github.com/user-attachments/assets/9decc914-9416-402e-8f9f-83fd211c3f13" />
+<img width="1415" height="714" alt="Captura de pantalla 2026-03-27 160915" src="https://github.com/user-attachments/assets/629e0d20-7a90-4abe-af8d-08fbbd8aec4c" />
+<img width="1418" height="716" alt="Captura de pantalla 2026-03-27 160848" src="https://github.com/user-attachments/assets/131fcc23-c414-4dee-8eea-3ef40f7cb70e" />
+<img width="682" height="606" alt="Captura de pantalla 2026-03-27 160526" src="https://github.com/user-attachments/assets/85f0bf5f-6f59-46b8-84a7-9f0c9222b1e2" />
+
+
