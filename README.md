@@ -83,13 +83,40 @@ dotnet run --project FacturApp.csproj
 Si ejecutas la app en un emulador o dispositivo físico Android, recuerda que `localhost` no funcionará. El archivo `AppConfig.cs` ya está preparado para detectar el entorno, pero asegúrate de que la IP `LocalHostIp` coincida con la IP local de tu máquina de desarrollo.
 
 ---
+## 📸 Vistas de la Aplicación
+
+A continuación, algunas capturas del funcionamiento y la interfaz de la aplicación:
+
+<div align="center">
+  <img width="600" alt="Vista Principal de FacturApp" src="https://github.com/user-attachments/assets/d325ef5e-c026-4655-bf53-5d18983c34f7" />
+  <p><em>Vista Principal de FacturApp</em></p>
+</div>
+
+<div align="center">
+  <img width="682" alt="Procesamiento de Facturas" src="https://github.com/user-attachments/assets/85f0bf5f-6f59-46b8-84a7-9f0c9222b1e2" />
+  <p><em>Asistente IA analizando documentos</em></p>
+</div>
+
+<div align="center">
+  <img width="716" alt="Interfaz de Gestión" src="https://github.com/user-attachments/assets/4c8c061a-62ac-4eea-9e30-465cecfba6d4" />
+  <p><em>Extracción de datos inteligente</em></p>
+</div>
+
+### Panel de Administración y Servicios (RabbitMQ)
+La arquitectura asíncrona garantiza que la interfaz de usuario nunca se bloquee mientras se procesan las facturas.
+
+<div align="center">
+  <img width="1415" alt="Dashboard de RabbitMQ 1" src="https://github.com/user-attachments/assets/629e0d20-7a90-4abe-af8d-08fbbd8aec4c" />
+</div>
+
+<div align="center">
+  <img width="1418" alt="Dashboard de RabbitMQ 2" src="https://github.com/user-attachments/assets/131fcc23-c414-4dee-8eea-3ef40f7cb70e" />
+</div>
+
+<div align="center">
+  <img width="1424" alt="Monitorización de Colas" src="https://github.com/user-attachments/assets/9decc914-9416-402e-8f9f-83fd211c3f13" />
+</div>
+
+---
 
 Developed with ❤️ by David Paredes.
-<img width="716" height="636" alt="Captura de pantalla 2026-03-27 161226" src="https://github.com/user-attachments/assets/4c8c061a-62ac-4eea-9e30-465cecfba6d4" />
-<img width="600" height="649" alt="Captura de pantalla 2026-03-27 161037" src="https://github.com/user-attachments/assets/d325ef5e-c026-4655-bf53-5d18983c34f7" />
-<img width="1424" height="491" alt="Captura de pantalla 2026-03-27 160942" src="https://github.com/user-attachments/assets/9decc914-9416-402e-8f9f-83fd211c3f13" />
-<img width="1415" height="714" alt="Captura de pantalla 2026-03-27 160915" src="https://github.com/user-attachments/assets/629e0d20-7a90-4abe-af8d-08fbbd8aec4c" />
-<img width="1418" height="716" alt="Captura de pantalla 2026-03-27 160848" src="https://github.com/user-attachments/assets/131fcc23-c414-4dee-8eea-3ef40f7cb70e" />
-<img width="682" height="606" alt="Captura de pantalla 2026-03-27 160526" src="https://github.com/user-attachments/assets/85f0bf5f-6f59-46b8-84a7-9f0c9222b1e2" />
-
-
